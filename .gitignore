@@ -40,3 +40,4 @@ target/
 .settings/
 *.log
 BACKEND_SPRINGBOOT.md
+.env

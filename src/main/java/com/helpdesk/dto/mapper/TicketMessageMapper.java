@@ -17,7 +17,7 @@ public final class TicketMessageMapper {
 
     public static TicketMessage toEntity(TicketMessageRequestDto dto, Ticket ticket, User author) {
         TicketMessage ticketMessage = new TicketMessage();
-        write(ticketMessage, "id", dto.id());
+        write(ticketMessage, "id", UUID.randomUUID());
         write(ticketMessage, "ticket", ticket);
         write(ticketMessage, "author", author);
         write(ticketMessage, "type", dto.type());

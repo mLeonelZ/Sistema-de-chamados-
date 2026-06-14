@@ -1,5 +1,6 @@
 package com.helpdesk.service;
 
+import com.helpdesk.exception.ResourceNotFoundException;
 import com.helpdesk.model.Notification;
 import com.helpdesk.repository.NotificationRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -22,10 +23,17 @@ public class NotificationService {
     }
 
     public Notification findById(UUID id) {
-        return notificationRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Notification not found"));
+        return notificationRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Notification not found"));
     }
 
     public Notification save(Notification notification) {
+        return notificationRepository.save(notification);
+    }
+
+    public Notification update(UUID id, Notification notification) {
+        Notification existing = findById(id);
+        notification.setId(existing.getId());
+        notification.setCreatedAt(existing.getCreatedAt());
         return notificationRepository.save(notification);
     }
 

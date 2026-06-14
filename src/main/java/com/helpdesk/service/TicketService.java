@@ -1,5 +1,6 @@
 package com.helpdesk.service;
 
+import com.helpdesk.exception.ResourceNotFoundException;
 import com.helpdesk.model.Ticket;
 import com.helpdesk.repository.TicketRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -22,14 +23,21 @@ public class TicketService {
     }
 
     public Ticket findById(UUID id) {
-        return ticketRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Ticket not found"));
+        return ticketRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
     }
 
     public Ticket findByCode(String code) {
-        return ticketRepository.findByCode(code).orElseThrow(() -> new EntityNotFoundException("Ticket not found"));
+        return ticketRepository.findByCode(code).orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
     }
 
     public Ticket save(Ticket ticket) {
+        return ticketRepository.save(ticket);
+    }
+
+    public Ticket update(UUID id, Ticket ticket) {
+        Ticket existing = findById(id);
+        ticket.setId(existing.getId());
+        ticket.setCreatedAt(existing.getCreatedAt());
         return ticketRepository.save(ticket);
     }
 

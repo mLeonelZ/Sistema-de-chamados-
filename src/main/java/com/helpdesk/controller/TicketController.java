@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -50,7 +51,7 @@ public class TicketController {
     @PostMapping
     public ResponseEntity<TicketResponseDto> create(@RequestBody TicketRequestDto dto) {
         Ticket ticket = new Ticket();
-        FieldMapper.write(ticket, "id", dto.id());
+        FieldMapper.write(ticket, "id", UUID.randomUUID());
         FieldMapper.write(ticket, "code", dto.code());
         FieldMapper.write(ticket, "subject", dto.subject());
         FieldMapper.write(ticket, "description", dto.description());
@@ -68,6 +69,27 @@ public class TicketController {
         FieldMapper.write(ticket, "createdAt", LocalDateTime.now());
         FieldMapper.write(ticket, "updatedAt", LocalDateTime.now());
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponseDto(ticketService.save(ticket)));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<TicketResponseDto> update(@PathVariable UUID id, @RequestBody TicketRequestDto dto) {
+        Ticket ticket = new Ticket();
+        FieldMapper.write(ticket, "code", dto.code());
+        FieldMapper.write(ticket, "subject", dto.subject());
+        FieldMapper.write(ticket, "description", dto.description());
+        FieldMapper.write(ticket, "category", categoryService.findById(dto.categoryId()));
+        FieldMapper.write(ticket, "priority", dto.priority());
+        FieldMapper.write(ticket, "status", dto.status());
+        FieldMapper.write(ticket, "channel", dto.channel());
+        FieldMapper.write(ticket, "client", userService.findById(dto.clientId()));
+        FieldMapper.write(ticket, "assignee", dto.assigneeId() == null ? null : userService.findById(dto.assigneeId()));
+        FieldMapper.write(ticket, "slaFirstResponseDeadline", dto.slaFirstResponseDeadline());
+        FieldMapper.write(ticket, "slaResolutionDeadline", dto.slaResolutionDeadline());
+        FieldMapper.write(ticket, "firstResponseAt", dto.firstResponseAt());
+        FieldMapper.write(ticket, "resolvedAt", dto.resolvedAt());
+        FieldMapper.write(ticket, "closedAt", dto.closedAt());
+        FieldMapper.write(ticket, "updatedAt", LocalDateTime.now());
+        return ResponseEntity.ok(toResponseDto(ticketService.update(id, ticket)));
     }
 
     @DeleteMapping("/{id}")

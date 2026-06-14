@@ -16,10 +16,10 @@ public final class UserMapper {
 
     public static User toEntity(UserRequestDto dto, Department department) {
         User user = new User();
-        write(user, "id", dto.id());
+        write(user, "id", UUID.randomUUID());
         write(user, "name", dto.name());
         write(user, "email", dto.email());
-        write(user, "passwordHash", dto.passwordHash());
+        write(user, "password", dto.password());
         write(user, "role", dto.role());
         write(user, "status", dto.status());
         write(user, "department", department);

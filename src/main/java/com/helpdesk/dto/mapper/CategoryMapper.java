@@ -16,7 +16,7 @@ public final class CategoryMapper {
 
     public static Category toEntity(CategoryRequestDto dto, SlaPolicy slaPolicy) {
         Category category = new Category();
-        write(category, "id", dto.id());
+        write(category, "id", UUID.randomUUID());
         write(category, "name", dto.name());
         write(category, "slaPolicy", slaPolicy);
         write(category, "createdAt", LocalDateTime.now());

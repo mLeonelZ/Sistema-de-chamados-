@@ -1,5 +1,6 @@
 package com.helpdesk.service;
 
+import com.helpdesk.exception.ResourceNotFoundException;
 import com.helpdesk.model.SlaPolicy;
 import com.helpdesk.repository.SlaPolicyRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -22,10 +23,17 @@ public class SlaPolicyService {
     }
 
     public SlaPolicy findById(UUID id) {
-        return slaPolicyRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Sla policy not found"));
+        return slaPolicyRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Sla policy not found"));
     }
 
     public SlaPolicy save(SlaPolicy slaPolicy) {
+        return slaPolicyRepository.save(slaPolicy);
+    }
+
+    public SlaPolicy update(UUID id, SlaPolicy slaPolicy) {
+        SlaPolicy existing = findById(id);
+        slaPolicy.setId(existing.getId());
+        slaPolicy.setCreatedAt(existing.getCreatedAt());
         return slaPolicyRepository.save(slaPolicy);
     }
 

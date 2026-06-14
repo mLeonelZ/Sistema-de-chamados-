@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -42,13 +43,23 @@ public class DepartmentController {
     @PostMapping
     public ResponseEntity<DepartmentResponseDto> create(@RequestBody DepartmentRequestDto dto) {
         Department department = new Department();
-        FieldMapper.write(department, "id", dto.id());
+        FieldMapper.write(department, "id", UUID.randomUUID());
         FieldMapper.write(department, "name", dto.name());
         FieldMapper.write(department, "managerName", dto.managerName());
         FieldMapper.write(department, "status", dto.status());
         FieldMapper.write(department, "createdAt", LocalDateTime.now());
         FieldMapper.write(department, "updatedAt", LocalDateTime.now());
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponseDto(departmentService.save(department)));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<DepartmentResponseDto> update(@PathVariable UUID id, @RequestBody DepartmentRequestDto dto) {
+        Department department = new Department();
+        FieldMapper.write(department, "name", dto.name());
+        FieldMapper.write(department, "managerName", dto.managerName());
+        FieldMapper.write(department, "status", dto.status());
+        FieldMapper.write(department, "updatedAt", LocalDateTime.now());
+        return ResponseEntity.ok(toResponseDto(departmentService.update(id, department)));
     }
 
     @DeleteMapping("/{id}")

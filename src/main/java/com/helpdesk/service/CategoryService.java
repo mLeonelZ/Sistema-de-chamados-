@@ -1,5 +1,6 @@
 package com.helpdesk.service;
 
+import com.helpdesk.exception.ResourceNotFoundException;
 import com.helpdesk.model.Category;
 import com.helpdesk.repository.CategoryRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -22,10 +23,17 @@ public class CategoryService {
     }
 
     public Category findById(UUID id) {
-        return categoryRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Category not found"));
+        return categoryRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Category not found"));
     }
 
     public Category save(Category category) {
+        return categoryRepository.save(category);
+    }
+
+    public Category update(UUID id, Category category) {
+        Category existing = findById(id);
+        category.setId(existing.getId());
+        category.setCreatedAt(existing.getCreatedAt());
         return categoryRepository.save(category);
     }
 

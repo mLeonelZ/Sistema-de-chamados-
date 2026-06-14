@@ -17,7 +17,7 @@ public final class NotificationMapper {
 
     public static Notification toEntity(NotificationRequestDto dto, User user, Ticket ticket) {
         Notification notification = new Notification();
-        write(notification, "id", dto.id());
+        write(notification, "id", UUID.randomUUID());
         write(notification, "user", user);
         write(notification, "ticket", ticket);
         write(notification, "title", dto.title());

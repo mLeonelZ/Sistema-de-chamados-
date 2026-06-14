@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -50,7 +51,7 @@ public class NotificationController {
     @PostMapping
     public ResponseEntity<NotificationResponseDto> create(@RequestBody NotificationRequestDto dto) {
         Notification notification = new Notification();
-        FieldMapper.write(notification, "id", dto.id());
+        FieldMapper.write(notification, "id", UUID.randomUUID());
         FieldMapper.write(notification, "user", userService.findById(dto.userId()));
         FieldMapper.write(notification, "ticket", dto.ticketId() == null ? null : ticketService.findById(dto.ticketId()));
         FieldMapper.write(notification, "title", dto.title());
@@ -59,6 +60,18 @@ public class NotificationController {
         FieldMapper.write(notification, "read", dto.read());
         FieldMapper.write(notification, "createdAt", LocalDateTime.now());
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponseDto(notificationService.save(notification)));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<NotificationResponseDto> update(@PathVariable UUID id, @RequestBody NotificationRequestDto dto) {
+        Notification notification = new Notification();
+        FieldMapper.write(notification, "user", userService.findById(dto.userId()));
+        FieldMapper.write(notification, "ticket", dto.ticketId() == null ? null : ticketService.findById(dto.ticketId()));
+        FieldMapper.write(notification, "title", dto.title());
+        FieldMapper.write(notification, "message", dto.message());
+        FieldMapper.write(notification, "type", dto.type());
+        FieldMapper.write(notification, "read", dto.read());
+        return ResponseEntity.ok(toResponseDto(notificationService.update(id, notification)));
     }
 
     @DeleteMapping("/{id}")

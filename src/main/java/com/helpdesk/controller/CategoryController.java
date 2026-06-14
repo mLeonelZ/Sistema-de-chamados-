@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -46,12 +47,21 @@ public class CategoryController {
     @PostMapping
     public ResponseEntity<CategoryResponseDto> create(@RequestBody CategoryRequestDto dto) {
         Category category = new Category();
-        FieldMapper.write(category, "id", dto.id());
+        FieldMapper.write(category, "id", UUID.randomUUID());
         FieldMapper.write(category, "name", dto.name());
         FieldMapper.write(category, "slaPolicy", slaPolicyService.findById(dto.slaPolicyId()));
         FieldMapper.write(category, "createdAt", LocalDateTime.now());
         FieldMapper.write(category, "updatedAt", LocalDateTime.now());
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponseDto(categoryService.save(category)));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<CategoryResponseDto> update(@PathVariable UUID id, @RequestBody CategoryRequestDto dto) {
+        Category category = new Category();
+        FieldMapper.write(category, "name", dto.name());
+        FieldMapper.write(category, "slaPolicy", slaPolicyService.findById(dto.slaPolicyId()));
+        FieldMapper.write(category, "updatedAt", LocalDateTime.now());
+        return ResponseEntity.ok(toResponseDto(categoryService.update(id, category)));
     }
 
     @DeleteMapping("/{id}")

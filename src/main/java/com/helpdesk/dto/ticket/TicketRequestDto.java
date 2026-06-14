@@ -8,7 +8,6 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 public record TicketRequestDto(
-        UUID id,
         String code,
         String subject,
         String description,

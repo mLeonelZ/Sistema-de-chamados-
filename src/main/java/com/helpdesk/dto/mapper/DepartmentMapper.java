@@ -15,7 +15,7 @@ public final class DepartmentMapper {
 
     public static Department toEntity(DepartmentRequestDto dto) {
         Department department = new Department();
-        write(department, "id", dto.id());
+        write(department, "id", UUID.randomUUID());
         write(department, "name", dto.name());
         write(department, "managerName", dto.managerName());
         write(department, "status", dto.status());

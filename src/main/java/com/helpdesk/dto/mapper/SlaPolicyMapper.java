@@ -15,7 +15,7 @@ public final class SlaPolicyMapper {
 
     public static SlaPolicy toEntity(SlaPolicyRequestDto dto) {
         SlaPolicy slaPolicy = new SlaPolicy();
-        write(slaPolicy, "id", dto.id());
+        write(slaPolicy, "id", UUID.randomUUID());
         write(slaPolicy, "name", dto.name());
         write(slaPolicy, "responseTimeMinutes", dto.responseTimeMinutes());
         write(slaPolicy, "resolutionTimeMinutes", dto.resolutionTimeMinutes());

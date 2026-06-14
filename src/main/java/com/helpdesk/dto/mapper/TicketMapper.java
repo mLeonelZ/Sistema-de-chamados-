@@ -17,7 +17,7 @@ public final class TicketMapper {
 
     public static Ticket toEntity(TicketRequestDto dto, Category category, User client, User assignee) {
         Ticket ticket = new Ticket();
-        write(ticket, "id", dto.id());
+        write(ticket, "id", UUID.randomUUID());
         write(ticket, "code", dto.code());
         write(ticket, "subject", dto.subject());
         write(ticket, "description", dto.description());

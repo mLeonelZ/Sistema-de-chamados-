@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -50,13 +51,23 @@ public class TicketMessageController {
     @PostMapping
     public ResponseEntity<TicketMessageResponseDto> create(@RequestBody TicketMessageRequestDto dto) {
         TicketMessage ticketMessage = new TicketMessage();
-        FieldMapper.write(ticketMessage, "id", dto.id());
+        FieldMapper.write(ticketMessage, "id", UUID.randomUUID());
         FieldMapper.write(ticketMessage, "ticket", ticketService.findById(dto.ticketId()));
         FieldMapper.write(ticketMessage, "author", userService.findById(dto.authorId()));
         FieldMapper.write(ticketMessage, "type", dto.type());
         FieldMapper.write(ticketMessage, "text", dto.text());
         FieldMapper.write(ticketMessage, "createdAt", LocalDateTime.now());
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponseDto(ticketMessageService.save(ticketMessage)));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<TicketMessageResponseDto> update(@PathVariable UUID id, @RequestBody TicketMessageRequestDto dto) {
+        TicketMessage ticketMessage = new TicketMessage();
+        FieldMapper.write(ticketMessage, "ticket", ticketService.findById(dto.ticketId()));
+        FieldMapper.write(ticketMessage, "author", userService.findById(dto.authorId()));
+        FieldMapper.write(ticketMessage, "type", dto.type());
+        FieldMapper.write(ticketMessage, "text", dto.text());
+        return ResponseEntity.ok(toResponseDto(ticketMessageService.update(id, ticketMessage)));
     }
 
     @DeleteMapping("/{id}")

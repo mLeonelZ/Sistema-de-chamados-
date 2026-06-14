@@ -1,6 +1,10 @@
 package com.helpdesk.controller;
 
-import com.helpdesk.model.User;
+import com.helpdesk.dto.mapper.UserMapper;
+import com.helpdesk.dto.user.UserRequestDto;
+import com.helpdesk.dto.user.UserResponseDto;
+import com.helpdesk.model.Department;
+import com.helpdesk.service.DepartmentService;
 import com.helpdesk.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,24 +24,27 @@ import java.util.UUID;
 public class UserController {
 
     private final UserService userService;
+    private final DepartmentService departmentService;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, DepartmentService departmentService) {
         this.userService = userService;
+        this.departmentService = departmentService;
     }
 
     @GetMapping
-    public ResponseEntity<List<User>> findAll() {
-        return ResponseEntity.ok(userService.findAll());
+    public ResponseEntity<List<UserResponseDto>> findAll() {
+        return ResponseEntity.ok(userService.findAll().stream().map(UserMapper::toResponseDto).toList());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<User> findById(@PathVariable UUID id) {
-        return ResponseEntity.ok(userService.findById(id));
+    public ResponseEntity<UserResponseDto> findById(@PathVariable UUID id) {
+        return ResponseEntity.ok(UserMapper.toResponseDto(userService.findById(id)));
     }
 
     @PostMapping
-    public ResponseEntity<User> create(@RequestBody User user) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(userService.save(user));
+    public ResponseEntity<UserResponseDto> create(@RequestBody UserRequestDto dto) {
+        Department department = dto.departmentId() == null ? null : departmentService.findById(dto.departmentId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(UserMapper.toResponseDto(userService.save(UserMapper.toEntity(dto, department))));
     }
 
     @DeleteMapping("/{id}")

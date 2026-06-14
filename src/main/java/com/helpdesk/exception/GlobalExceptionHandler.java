@@ -35,9 +35,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> handleBusinessRule(BusinessRuleException ex) {
         Map<String, String> error = new HashMap<>();
         error.put("erro", ex.getMessage());
-
-        // Retorna HTTP 409 (Conflict), que é o status correto para dados duplicados
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<Map<String, String>> handleUnauthorized(UnauthorizedException ex) {
+        Map<String, String> error = new HashMap<>();
+        error.put("erro", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+    }
 }

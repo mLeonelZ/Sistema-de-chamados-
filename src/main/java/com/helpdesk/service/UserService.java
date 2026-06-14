@@ -2,9 +2,9 @@ package com.helpdesk.service;
 
 import com.helpdesk.exception.BusinessRuleException;
 import com.helpdesk.exception.ResourceNotFoundException;
+import com.helpdesk.exception.UnauthorizedException;
 import com.helpdesk.model.User;
 import com.helpdesk.repository.UserRepository;
-import jakarta.persistence.EntityNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -33,6 +33,17 @@ public class UserService {
 
     public User findByEmail(String email) {
         return userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+    }
+
+    public User authenticate(String email, String rawPassword) {
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new UnauthorizedException("Credenciais inválidas."));
+        if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
+            throw new UnauthorizedException("Credenciais inválidas.");
+        }
+        if (user.getStatus() != com.helpdesk.model.enums.UserStatus.ACTIVE) {
+            throw new UnauthorizedException("Usuário inativo.");
+        }
+        return user;
     }
 
     public User save(User user) {

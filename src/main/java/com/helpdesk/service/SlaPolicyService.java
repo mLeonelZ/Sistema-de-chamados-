@@ -1,0 +1,35 @@
+package com.helpdesk.service;
+
+import com.helpdesk.model.SlaPolicy;
+import com.helpdesk.repository.SlaPolicyRepository;
+import jakarta.persistence.EntityNotFoundException;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.UUID;
+
+@Service
+public class SlaPolicyService {
+
+    private final SlaPolicyRepository slaPolicyRepository;
+
+    public SlaPolicyService(SlaPolicyRepository slaPolicyRepository) {
+        this.slaPolicyRepository = slaPolicyRepository;
+    }
+
+    public List<SlaPolicy> findAll() {
+        return slaPolicyRepository.findAll();
+    }
+
+    public SlaPolicy findById(UUID id) {
+        return slaPolicyRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Sla policy not found"));
+    }
+
+    public SlaPolicy save(SlaPolicy slaPolicy) {
+        return slaPolicyRepository.save(slaPolicy);
+    }
+
+    public void deleteById(UUID id) {
+        slaPolicyRepository.deleteById(id);
+    }
+}

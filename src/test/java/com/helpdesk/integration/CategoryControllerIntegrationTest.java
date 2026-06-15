@@ -30,7 +30,8 @@ class CategoryControllerIntegrationTest extends AbstractIntegrationTest {
         category.setUpdatedAt(LocalDateTime.now());
         when(categoryRepository.findAll()).thenReturn(List.of(category));
 
-        mockMvc.perform(get("/api/v1/categories"))
+        mockMvc.perform(get("/api/v1/categories")
+                .header("Authorization", "Bearer " + generateValidToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value("Hardware"));
     }
@@ -48,7 +49,8 @@ class CategoryControllerIntegrationTest extends AbstractIntegrationTest {
         category.setUpdatedAt(LocalDateTime.now());
         when(categoryRepository.findById(id)).thenReturn(Optional.of(category));
 
-        mockMvc.perform(get("/api/v1/categories/{id}", id))
+        mockMvc.perform(get("/api/v1/categories/{id}", id)
+                .header("Authorization", "Bearer " + generateValidToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Software"));
     }
@@ -76,7 +78,10 @@ class CategoryControllerIntegrationTest extends AbstractIntegrationTest {
                 }
                 """.formatted(slaId);
 
-        mockMvc.perform(put("/api/v1/categories/{id}", id).contentType("application/json").content(body))
+        mockMvc.perform(put("/api/v1/categories/{id}", id)
+                .contentType("application/json")
+                .content(body)
+                .header("Authorization", "Bearer " + generateValidToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(id.toString()))
                 .andExpect(jsonPath("$.name").value("Banco de Dados"));
@@ -96,7 +101,10 @@ class CategoryControllerIntegrationTest extends AbstractIntegrationTest {
                 }
                 """.formatted(slaId);
 
-        mockMvc.perform(put("/api/v1/categories/{id}", id).contentType("application/json").content(body))
+        mockMvc.perform(put("/api/v1/categories/{id}", id)
+                .contentType("application/json")
+                .content(body)
+                .header("Authorization", "Bearer " + generateValidToken()))
                 .andExpect(status().isNotFound());
     }
 
@@ -118,7 +126,10 @@ class CategoryControllerIntegrationTest extends AbstractIntegrationTest {
                 }
                 """.formatted(slaId);
 
-        mockMvc.perform(put("/api/v1/categories/{id}", id).contentType("application/json").content(body))
+        mockMvc.perform(put("/api/v1/categories/{id}", id)
+                .contentType("application/json")
+                .content(body)
+                .header("Authorization", "Bearer " + generateValidToken()))
                 .andExpect(status().isNotFound());
     }
 }

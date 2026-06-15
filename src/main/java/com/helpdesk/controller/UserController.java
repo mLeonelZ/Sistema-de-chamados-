@@ -35,24 +35,24 @@ public class UserController {
 
     @GetMapping
     public ResponseEntity<List<UserResponseDto>> findAll() {
-        return ResponseEntity.ok(userService.findAll().stream().map(UserMapper::toResponseDto).toList());
+        return ResponseEntity.ok(userService.findAll().stream().map(UserMapper::toResponse).toList());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<UserResponseDto> findById(@PathVariable UUID id) {
-        return ResponseEntity.ok(UserMapper.toResponseDto(userService.findById(id)));
+        return ResponseEntity.ok(UserMapper.toResponse(userService.findById(id)));
     }
 
     @PostMapping
     public ResponseEntity<UserResponseDto> create(@RequestBody @Valid UserRequestDto dto) {
         Department department = dto.departmentId() == null ? null : departmentService.findById(dto.departmentId());
-        return ResponseEntity.status(HttpStatus.CREATED).body(UserMapper.toResponseDto(userService.save(UserMapper.toEntity(dto, department))));
+        return ResponseEntity.status(HttpStatus.CREATED).body(UserMapper.toResponse(userService.save(UserMapper.toEntity(dto, department))));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<UserResponseDto> update(@PathVariable UUID id, @RequestBody @Valid UserRequestDto dto) {
         Department department = dto.departmentId() == null ? null : departmentService.findById(dto.departmentId());
-        return ResponseEntity.ok(UserMapper.toResponseDto(userService.update(id, UserMapper.toEntity(dto, department))));
+        return ResponseEntity.ok(UserMapper.toResponse(userService.update(id, UserMapper.toEntity(dto, department))));
     }
 
     @DeleteMapping("/{id}")

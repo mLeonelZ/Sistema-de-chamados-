@@ -10,6 +10,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -19,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -26,6 +28,9 @@ class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private UserService userService;
@@ -36,6 +41,7 @@ class UserServiceTest {
         user.setEmail("u@a.com");
         user.setPassword("12345678");
         when(userRepository.existsByEmail("u@a.com")).thenReturn(false);
+        when(passwordEncoder.encode(anyString())).thenReturn("hashed_password");
         when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
         User saved = userService.save(user);
         assertNotEquals("12345678", saved.getPassword());
@@ -60,8 +66,7 @@ class UserServiceTest {
     @Test
     void updateShouldKeepExistingHashWhenPasswordAlreadyMatches() {
         UUID id = UUID.randomUUID();
-        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-        String hash = encoder.encode("12345678");
+        String hash = "existing_hash";
         User existing = new User();
         existing.setId(id);
         existing.setEmail("a@a.com");
@@ -71,6 +76,7 @@ class UserServiceTest {
         incoming.setEmail("a@a.com");
         incoming.setPassword("12345678");
         when(userRepository.findById(id)).thenReturn(Optional.of(existing));
+        when(passwordEncoder.matches("12345678", hash)).thenReturn(true);
         when(userRepository.existsByEmailAndIdNot("a@a.com", id)).thenReturn(false);
         when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
         User saved = userService.update(id, incoming);

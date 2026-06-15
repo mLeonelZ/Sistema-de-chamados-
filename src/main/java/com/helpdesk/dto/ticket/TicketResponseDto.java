@@ -4,9 +4,12 @@ import com.helpdesk.model.enums.TicketChannel;
 import com.helpdesk.model.enums.TicketPriority;
 import com.helpdesk.model.enums.TicketStatus;
 
+import lombok.Builder;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+@Builder
 public record TicketResponseDto(
         UUID id,
         String code,

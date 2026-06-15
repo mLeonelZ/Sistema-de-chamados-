@@ -39,7 +39,7 @@ class CategoryMapperTest {
         category.setSlaPolicy(slaPolicy);
         category.setCreatedAt(LocalDateTime.now().minusDays(1));
         category.setUpdatedAt(LocalDateTime.now());
-        CategoryResponseDto response = CategoryMapper.toResponseDto(category);
+        CategoryResponseDto response = CategoryMapper.toResponse(category);
         assertEquals(id, response.id());
         assertEquals("Software", response.name());
         assertEquals(slaId, response.slaPolicyId());

@@ -33,7 +33,7 @@ class SlaPolicyMapperTest {
         policy.setResolutionTimeMinutes(120);
         policy.setCreatedAt(LocalDateTime.now().minusDays(1));
         policy.setUpdatedAt(LocalDateTime.now());
-        SlaPolicyResponseDto response = SlaPolicyMapper.toResponseDto(policy);
+        SlaPolicyResponseDto response = SlaPolicyMapper.toResponse(policy);
         assertEquals(id, response.id());
         assertEquals("Alto", response.name());
         assertEquals(30, response.responseTimeMinutes());

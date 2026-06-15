@@ -46,7 +46,7 @@ class TicketMessageMapperTest {
         message.setType(MessageType.INTERNAL);
         message.setText("xyz");
         message.setCreatedAt(LocalDateTime.now());
-        TicketMessageResponseDto response = TicketMessageMapper.toResponseDto(message);
+        TicketMessageResponseDto response = TicketMessageMapper.toResponse(message);
         assertEquals(id, response.id());
         assertEquals(ticketId, response.ticketId());
         assertEquals(authorId, response.authorId());

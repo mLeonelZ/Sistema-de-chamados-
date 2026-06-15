@@ -59,7 +59,7 @@ class TicketMapperTest {
         ticket.setAssignee(assignee);
         ticket.setCreatedAt(LocalDateTime.now().minusDays(1));
         ticket.setUpdatedAt(LocalDateTime.now());
-        TicketResponseDto response = TicketMapper.toResponseDto(ticket);
+        TicketResponseDto response = TicketMapper.toResponse(ticket);
         assertEquals(id, response.id());
         assertEquals(categoryId, response.categoryId());
         assertEquals(clientId, response.clientId());

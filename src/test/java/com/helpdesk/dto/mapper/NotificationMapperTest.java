@@ -49,7 +49,7 @@ class NotificationMapperTest {
         notification.setType(NotificationType.SUCCESS);
         notification.setRead(true);
         notification.setCreatedAt(LocalDateTime.now());
-        NotificationResponseDto response = NotificationMapper.toResponseDto(notification);
+        NotificationResponseDto response = NotificationMapper.toResponse(notification);
         assertEquals(id, response.id());
         assertEquals(userId, response.userId());
         assertEquals(ticketId, response.ticketId());

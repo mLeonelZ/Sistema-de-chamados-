@@ -44,7 +44,7 @@ class UserMapperTest {
         user.setDepartment(department);
         user.setCreatedAt(LocalDateTime.now().minusDays(1));
         user.setUpdatedAt(LocalDateTime.now());
-        UserResponseDto response = UserMapper.toResponseDto(user);
+        UserResponseDto response = UserMapper.toResponse(user);
         assertEquals(id, response.id());
         assertEquals("Bob", response.name());
         assertEquals(departmentId, response.departmentId());

@@ -34,7 +34,7 @@ class DepartmentMapperTest {
         department.setStatus(DepartmentStatus.INACTIVE);
         department.setCreatedAt(LocalDateTime.now().minusDays(1));
         department.setUpdatedAt(LocalDateTime.now());
-        DepartmentResponseDto response = DepartmentMapper.toResponseDto(department);
+        DepartmentResponseDto response = DepartmentMapper.toResponse(department);
         assertEquals(id, response.id());
         assertEquals("N2", response.name());
         assertEquals(DepartmentStatus.INACTIVE, response.status());

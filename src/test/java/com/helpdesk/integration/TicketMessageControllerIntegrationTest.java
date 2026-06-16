@@ -4,7 +4,10 @@ import com.helpdesk.model.Ticket;
 import com.helpdesk.model.TicketMessage;
 import com.helpdesk.model.User;
 import com.helpdesk.model.enums.MessageType;
+import com.helpdesk.model.enums.Role;
+import com.helpdesk.model.enums.UserStatus;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -14,144 +17,76 @@ import java.util.UUID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class TicketMessageControllerIntegrationTest extends AbstractIntegrationTest {
 
     @Test
-    void findAllShouldReturn200() throws Exception {
+    void findByTicketIdShouldReturnOnlyPublicForClient() throws Exception {
+        UUID ticketId = UUID.randomUUID();
+        UUID clientId = UUID.randomUUID();
+        
+        User client = new User();
+        client.setId(clientId);
+        client.setRole(Role.CLIENTE);
+        
         Ticket ticket = new Ticket();
-        ticket.setId(UUID.randomUUID());
-        User author = new User();
-        author.setId(UUID.randomUUID());
-        TicketMessage message = new TicketMessage();
-        message.setId(UUID.randomUUID());
-        message.setTicket(ticket);
-        message.setAuthor(author);
-        message.setType(MessageType.PUBLIC);
-        message.setText("Mensagem inicial");
-        message.setCreatedAt(LocalDateTime.now());
-        when(ticketMessageRepository.findAll()).thenReturn(List.of(message));
+        ticket.setId(ticketId);
+        
+        TicketMessage m1 = new TicketMessage();
+        m1.setType(MessageType.PUBLIC);
+        m1.setText("Público");
+        m1.setTicket(ticket);
+        
+        TicketMessage m2 = new TicketMessage();
+        m2.setType(MessageType.INTERNAL);
+        m2.setText("Interno");
+        m2.setTicket(ticket);
 
-        mockMvc.perform(get("/api/v1/ticket-messages")
+        // Simula o usuário logado no token
+        // generateValidToken usa ADMIN por padrão no AbstractIntegrationTest, 
+        // mas o controlador busca o usuário pelo ID vindo do token (authentication.getName())
+        // Precisamos mockar o findById do UserService para retornar o perfil correto
+        when(userRepository.findById(any(UUID.class))).thenReturn(Optional.of(client));
+        when(ticketMessageRepository.findByTicketIdOrderByCreatedAtAsc(ticketId)).thenReturn(List.of(m1, m2));
+
+        mockMvc.perform(get("/api/v1/tickets/{ticketId}/messages", ticketId)
                         .header("Authorization", "Bearer " + generateValidToken()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].text").value("Mensagem inicial"));
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].text").value("Público"));
     }
 
     @Test
-    void findByIdShouldReturn200() throws Exception {
-        UUID id = UUID.randomUUID();
-        Ticket ticket = new Ticket();
-        ticket.setId(UUID.randomUUID());
-        User author = new User();
-        author.setId(UUID.randomUUID());
-        TicketMessage message = new TicketMessage();
-        message.setId(id);
-        message.setTicket(ticket);
-        message.setAuthor(author);
-        message.setType(MessageType.INTERNAL);
-        message.setText("Mensagem interna");
-        message.setCreatedAt(LocalDateTime.now());
-        when(ticketMessageRepository.findById(id)).thenReturn(Optional.of(message));
-
-        mockMvc.perform(get("/api/v1/ticket-messages/{id}", id)
-                        .header("Authorization", "Bearer " + generateValidToken()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.type").value(MessageType.INTERNAL.name()));
-    }
-
-    @Test
-    void updateShouldReturn200() throws Exception {
-        UUID id = UUID.randomUUID();
+    void createShouldReturn201() throws Exception {
         UUID ticketId = UUID.randomUUID();
         UUID authorId = UUID.randomUUID();
-
+        
         Ticket ticket = new Ticket();
         ticket.setId(ticketId);
         User author = new User();
         author.setId(authorId);
-        TicketMessage existing = new TicketMessage();
-        existing.setId(id);
-        existing.setCreatedAt(LocalDateTime.now().minusDays(1));
-
+        
         when(ticketRepository.findById(ticketId)).thenReturn(Optional.of(ticket));
         when(userRepository.findById(authorId)).thenReturn(Optional.of(author));
-        when(ticketMessageRepository.findById(id)).thenReturn(Optional.of(existing));
-        when(ticketMessageRepository.save(any(TicketMessage.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(ticketMessageRepository.save(any(TicketMessage.class))).thenAnswer(i -> i.getArgument(0));
 
         String body = """
                 {
                   "ticketId":"%s",
                   "authorId":"%s",
                   "type":"PUBLIC",
-                  "text":"Texto atualizado"
+                  "text":"Nova mensagem"
                 }
                 """.formatted(ticketId, authorId);
 
-        mockMvc.perform(put("/api/v1/ticket-messages/{id}", id)
+        mockMvc.perform(post("/api/v1/tickets/{ticketId}/messages", ticketId)
                         .header("Authorization", "Bearer " + generateValidToken())
                         .contentType("application/json")
                         .content(body))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(id.toString()))
-                .andExpect(jsonPath("$.text").value("Texto atualizado"));
-    }
-
-    @Test
-    void updateShouldReturn404WhenTicketNotFound() throws Exception {
-        UUID id = UUID.randomUUID();
-        UUID ticketId = UUID.randomUUID();
-        UUID authorId = UUID.randomUUID();
-
-        when(ticketRepository.findById(ticketId)).thenReturn(Optional.empty());
-
-        String body = """
-                {
-                  "ticketId":"%s",
-                  "authorId":"%s",
-                  "type":"PUBLIC",
-                  "text":"Texto"
-                }
-                """.formatted(ticketId, authorId);
-
-        mockMvc.perform(put("/api/v1/ticket-messages/{id}", id)
-                        .header("Authorization", "Bearer " + generateValidToken())
-                        .contentType("application/json")
-                        .content(body))
-                .andExpect(status().isNotFound());
-    }
-
-    @Test
-    void updateShouldReturn404WhenMessageNotFound() throws Exception {
-        UUID id = UUID.randomUUID();
-        UUID ticketId = UUID.randomUUID();
-        UUID authorId = UUID.randomUUID();
-
-        Ticket ticket = new Ticket();
-        ticket.setId(ticketId);
-        User author = new User();
-        author.setId(authorId);
-
-        when(ticketRepository.findById(ticketId)).thenReturn(Optional.of(ticket));
-        when(userRepository.findById(authorId)).thenReturn(Optional.of(author));
-        when(ticketMessageRepository.findById(id)).thenReturn(Optional.empty());
-
-        String body = """
-                {
-                  "ticketId":"%s",
-                  "authorId":"%s",
-                  "type":"PUBLIC",
-                  "text":"Texto"
-                }
-                """.formatted(ticketId, authorId);
-
-        mockMvc.perform(put("/api/v1/ticket-messages/{id}", id)
-                        .header("Authorization", "Bearer " + generateValidToken())
-                        .contentType("application/json")
-                        .content(body))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.text").value("Nova mensagem"));
     }
 }

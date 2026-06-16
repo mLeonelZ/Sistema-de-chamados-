@@ -4,5 +4,8 @@ public enum NotificationType {
     ALERTA_SLA,
     VIOLACAO_SLA,
     INFO,
-    SUCCESS
+    SUCCESS,
+    NOVO_CHAMADO,
+    ATRIBUICAO,
+    NOVA_MENSAGEM
 }

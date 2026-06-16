@@ -15,23 +15,13 @@ public class TicketMapper {
 
     public static Ticket toEntity(TicketRequestDto dto, Category category, User client, User assignee) {
         Ticket ticket = new Ticket();
-        ticket.setId(UUID.randomUUID());
-        ticket.setCode(dto.code());
         ticket.setSubject(dto.subject());
         ticket.setDescription(dto.description());
         ticket.setCategory(category);
         ticket.setPriority(dto.priority());
-        ticket.setStatus(dto.status());
         ticket.setChannel(dto.channel());
         ticket.setClient(client);
         ticket.setAssignee(assignee);
-        ticket.setSlaFirstResponseDeadline(dto.slaFirstResponseDeadline());
-        ticket.setSlaResolutionDeadline(dto.slaResolutionDeadline());
-        ticket.setFirstResponseAt(dto.firstResponseAt());
-        ticket.setResolvedAt(dto.resolvedAt());
-        ticket.setClosedAt(dto.closedAt());
-        ticket.setCreatedAt(LocalDateTime.now());
-        ticket.setUpdatedAt(LocalDateTime.now());
         return ticket;
     }
 

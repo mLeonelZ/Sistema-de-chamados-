@@ -4,18 +4,22 @@ import com.helpdesk.dto.mapper.TicketMapper;
 import com.helpdesk.dto.ticket.TicketRequestDto;
 import com.helpdesk.dto.ticket.TicketResponseDto;
 import com.helpdesk.model.Ticket;
+import com.helpdesk.model.enums.TicketStatus;
 import com.helpdesk.service.CategoryService;
 import com.helpdesk.service.TicketService;
 import com.helpdesk.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -45,8 +49,13 @@ public class TicketController {
         return ResponseEntity.ok(TicketMapper.toResponse(ticketService.findById(id)));
     }
 
+    @GetMapping("/code/{code}")
+    public ResponseEntity<TicketResponseDto> findByCode(@PathVariable String code) {
+        return ResponseEntity.ok(TicketMapper.toResponse(ticketService.findByCode(code)));
+    }
+
     @PostMapping
-    public ResponseEntity<TicketResponseDto> create(@RequestBody TicketRequestDto dto) {
+    public ResponseEntity<TicketResponseDto> create(@RequestBody @Valid TicketRequestDto dto) {
         Ticket ticket = TicketMapper.toEntity(
                 dto,
                 categoryService.findById(dto.categoryId()),
@@ -57,7 +66,7 @@ public class TicketController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<TicketResponseDto> update(@PathVariable UUID id, @RequestBody TicketRequestDto dto) {
+    public ResponseEntity<TicketResponseDto> update(@PathVariable UUID id, @RequestBody @Valid TicketRequestDto dto) {
         Ticket ticket = TicketMapper.toEntity(
                 dto,
                 categoryService.findById(dto.categoryId()),
@@ -65,6 +74,11 @@ public class TicketController {
                 dto.assigneeId() == null ? null : userService.findById(dto.assigneeId())
         );
         return ResponseEntity.ok(TicketMapper.toResponse(ticketService.update(id, ticket)));
+    }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<TicketResponseDto> updateStatus(@PathVariable UUID id, @RequestParam TicketStatus status) {
+        return ResponseEntity.ok(TicketMapper.toResponse(ticketService.updateStatus(id, status)));
     }
 
     @DeleteMapping("/{id}")

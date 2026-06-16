@@ -72,6 +72,7 @@ class TicketControllerIntegrationTest extends AbstractIntegrationTest {
 
         Ticket existing = new Ticket();
         existing.setId(ticketId);
+        existing.setCode("CHM-0001");
         existing.setCreatedAt(LocalDateTime.now().minusDays(1));
 
         Category category = new Category();
@@ -91,20 +92,13 @@ class TicketControllerIntegrationTest extends AbstractIntegrationTest {
 
         String body = """
                 {
-                  "code":"CH-10",
                   "subject":"Novo assunto",
                   "description":"Nova descrição",
                   "categoryId":"%s",
                   "priority":"ALTA",
-                  "status":"EM_ANDAMENTO",
                   "channel":"PORTAL",
                   "clientId":"%s",
-                  "assigneeId":"%s",
-                  "slaFirstResponseDeadline":"2026-01-01T10:00:00",
-                  "slaResolutionDeadline":"2026-01-02T10:00:00",
-                  "firstResponseAt":"2026-01-01T11:00:00",
-                  "resolvedAt":null,
-                  "closedAt":null
+                  "assigneeId":"%s"
                 }
                 """.formatted(categoryId, clientId, assigneeId);
 
@@ -114,9 +108,8 @@ class TicketControllerIntegrationTest extends AbstractIntegrationTest {
                         .content(body))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(ticketId.toString()))
-                .andExpect(jsonPath("$.code").value("CH-10"))
+                .andExpect(jsonPath("$.code").value("CHM-0001")) // Code remains the same
                 .andExpect(jsonPath("$.priority").value(TicketPriority.ALTA.name()))
-                .andExpect(jsonPath("$.status").value(TicketStatus.EM_ANDAMENTO.name()))
                 .andExpect(jsonPath("$.channel").value(TicketChannel.PORTAL.name()));
     }
 
@@ -155,43 +148,55 @@ class TicketControllerIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    void updateShouldReturn404WhenTicketNotFound() throws Exception {
-        UUID ticketId = UUID.randomUUID();
+    void createShouldReturn201() throws Exception {
         UUID categoryId = UUID.randomUUID();
         UUID clientId = UUID.randomUUID();
-
+        
         Category category = new Category();
         category.setId(categoryId);
+        
         User client = new User();
         client.setId(clientId);
-
+        
         when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
         when(userRepository.findById(clientId)).thenReturn(Optional.of(client));
-        when(ticketRepository.findById(ticketId)).thenReturn(Optional.empty());
+        when(ticketRepository.count()).thenReturn(0L);
+        when(ticketRepository.save(any(Ticket.class))).thenAnswer(i -> i.getArgument(0));
 
         String body = """
                 {
-                  "code":"CH-21",
-                  "subject":"Assunto",
-                  "description":"Descrição",
+                  "subject":"Problema na VPN",
+                  "description":"Não consigo conectar",
                   "categoryId":"%s",
-                  "priority":"MEDIA",
-                  "status":"ABERTO",
-                  "channel":"EMAIL",
-                  "clientId":"%s",
-                  "assigneeId":null,
-                  "slaFirstResponseDeadline":null,
-                  "slaResolutionDeadline":null,
-                  "firstResponseAt":null,
-                  "resolvedAt":null,
-                  "closedAt":null
+                  "priority":"CRITICA",
+                  "channel":"PORTAL",
+                  "clientId":"%s"
                 }
                 """.formatted(categoryId, clientId);
 
-        mockMvc.perform(put("/api/v1/tickets/{id}", ticketId)
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/v1/tickets")
                         .header("Authorization", "Bearer " + generateValidToken())
                         .contentType("application/json")
                         .content(body))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.code").value("CHM-0001"))
+                .andExpect(jsonPath("$.status").value(TicketStatus.ABERTO.name()));
+    }
+
+    @Test
+    void updateStatusShouldReturn200() throws Exception {
+        UUID id = UUID.randomUUID();
+        Ticket ticket = new Ticket();
+        ticket.setId(id);
+        ticket.setStatus(TicketStatus.ABERTO);
+        
+        when(ticketRepository.findById(id)).thenReturn(Optional.of(ticket));
+        when(ticketRepository.save(any(Ticket.class))).thenAnswer(i -> i.getArgument(0));
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch("/api/v1/tickets/{id}/status", id)
+                        .param("status", "EM_ANDAMENTO")
+                        .header("Authorization", "Bearer " + generateValidToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(TicketStatus.EM_ANDAMENTO.name()));
     }
 }

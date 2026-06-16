@@ -36,7 +36,8 @@ class TicketControllerIntegrationTest extends AbstractIntegrationTest {
         ticket.setClient(client);
         when(ticketRepository.findAll()).thenReturn(List.of(ticket));
 
-        mockMvc.perform(get("/api/v1/tickets"))
+        mockMvc.perform(get("/api/v1/tickets")
+                        .header("Authorization", "Bearer " + generateValidToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].code").value("CH-1"));
     }
@@ -56,7 +57,8 @@ class TicketControllerIntegrationTest extends AbstractIntegrationTest {
         ticket.setClient(client);
         when(ticketRepository.findById(id)).thenReturn(Optional.of(ticket));
 
-        mockMvc.perform(get("/api/v1/tickets/{id}", id))
+        mockMvc.perform(get("/api/v1/tickets/{id}", id)
+                        .header("Authorization", "Bearer " + generateValidToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.subject").value("Erro no login"));
     }
@@ -106,7 +108,10 @@ class TicketControllerIntegrationTest extends AbstractIntegrationTest {
                 }
                 """.formatted(categoryId, clientId, assigneeId);
 
-        mockMvc.perform(put("/api/v1/tickets/{id}", ticketId).contentType("application/json").content(body))
+        mockMvc.perform(put("/api/v1/tickets/{id}", ticketId)
+                        .header("Authorization", "Bearer " + generateValidToken())
+                        .contentType("application/json")
+                        .content(body))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(ticketId.toString()))
                 .andExpect(jsonPath("$.code").value("CH-10"))
@@ -142,7 +147,10 @@ class TicketControllerIntegrationTest extends AbstractIntegrationTest {
                 }
                 """.formatted(categoryId, clientId);
 
-        mockMvc.perform(put("/api/v1/tickets/{id}", ticketId).contentType("application/json").content(body))
+        mockMvc.perform(put("/api/v1/tickets/{id}", ticketId)
+                        .header("Authorization", "Bearer " + generateValidToken())
+                        .contentType("application/json")
+                        .content(body))
                 .andExpect(status().isNotFound());
     }
 
@@ -180,7 +188,10 @@ class TicketControllerIntegrationTest extends AbstractIntegrationTest {
                 }
                 """.formatted(categoryId, clientId);
 
-        mockMvc.perform(put("/api/v1/tickets/{id}", ticketId).contentType("application/json").content(body))
+        mockMvc.perform(put("/api/v1/tickets/{id}", ticketId)
+                        .header("Authorization", "Bearer " + generateValidToken())
+                        .contentType("application/json")
+                        .content(body))
                 .andExpect(status().isNotFound());
     }
 }

@@ -29,7 +29,8 @@ class DepartmentControllerIntegrationTest extends AbstractIntegrationTest {
         department.setUpdatedAt(LocalDateTime.now());
         when(departmentRepository.findAll()).thenReturn(List.of(department));
 
-        mockMvc.perform(get("/api/v1/departments"))
+        mockMvc.perform(get("/api/v1/departments")
+                        .header("Authorization", "Bearer " + generateValidToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value("Suporte"));
     }
@@ -46,7 +47,8 @@ class DepartmentControllerIntegrationTest extends AbstractIntegrationTest {
         department.setUpdatedAt(LocalDateTime.now());
         when(departmentRepository.findById(id)).thenReturn(Optional.of(department));
 
-        mockMvc.perform(get("/api/v1/departments/{id}", id))
+        mockMvc.perform(get("/api/v1/departments/{id}", id)
+                        .header("Authorization", "Bearer " + generateValidToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Infra"));
     }
@@ -70,7 +72,10 @@ class DepartmentControllerIntegrationTest extends AbstractIntegrationTest {
                 }
                 """;
 
-        mockMvc.perform(put("/api/v1/departments/{id}", id).contentType("application/json").content(body))
+        mockMvc.perform(put("/api/v1/departments/{id}", id)
+                        .header("Authorization", "Bearer " + generateValidToken())
+                        .contentType("application/json")
+                        .content(body))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(id.toString()))
                 .andExpect(jsonPath("$.status").value(DepartmentStatus.INACTIVE.name()));
@@ -90,7 +95,10 @@ class DepartmentControllerIntegrationTest extends AbstractIntegrationTest {
                 }
                 """;
 
-        mockMvc.perform(put("/api/v1/departments/{id}", id).contentType("application/json").content(body))
+        mockMvc.perform(put("/api/v1/departments/{id}", id)
+                        .header("Authorization", "Bearer " + generateValidToken())
+                        .contentType("application/json")
+                        .content(body))
                 .andExpect(status().isNotFound());
     }
 }

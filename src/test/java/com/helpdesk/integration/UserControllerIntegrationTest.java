@@ -26,7 +26,8 @@ class UserControllerIntegrationTest extends AbstractIntegrationTest {
         user.setEmail("maria@helpdesk.com");
         when(userRepository.findAll()).thenReturn(List.of(user));
 
-        mockMvc.perform(get("/api/v1/users"))
+        mockMvc.perform(get("/api/v1/users")
+                        .header("Authorization", "Bearer " + generateValidToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value("Maria"));
     }
@@ -40,7 +41,8 @@ class UserControllerIntegrationTest extends AbstractIntegrationTest {
         user.setEmail("maria@helpdesk.com");
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
-        mockMvc.perform(get("/api/v1/users/{id}", userId))
+        mockMvc.perform(get("/api/v1/users/{id}", userId)
+                        .header("Authorization", "Bearer " + generateValidToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value("maria@helpdesk.com"));
     }
@@ -71,7 +73,10 @@ class UserControllerIntegrationTest extends AbstractIntegrationTest {
                 }
                 """.formatted(departmentId);
 
-        mockMvc.perform(put("/api/v1/users/{id}", userId).contentType("application/json").content(body))
+        mockMvc.perform(put("/api/v1/users/{id}", userId)
+                        .header("Authorization", "Bearer " + generateValidToken())
+                        .contentType("application/json")
+                        .content(body))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(userId.toString()))
                 .andExpect(jsonPath("$.email").value("novo@helpdesk.com"));
@@ -84,7 +89,10 @@ class UserControllerIntegrationTest extends AbstractIntegrationTest {
                 {"name":"","email":"invalido","password":"123","role":null,"status":null,"departmentId":null}
                 """;
 
-        mockMvc.perform(put("/api/v1/users/{id}", userId).contentType("application/json").content(body))
+        mockMvc.perform(put("/api/v1/users/{id}", userId)
+                        .header("Authorization", "Bearer " + generateValidToken())
+                        .contentType("application/json")
+                        .content(body))
                 .andExpect(status().isBadRequest());
     }
 
@@ -105,7 +113,10 @@ class UserControllerIntegrationTest extends AbstractIntegrationTest {
                 {"name":"Novo","email":"duplicado@helpdesk.com","password":"12345678","role":"CLIENTE","status":"ACTIVE","departmentId":"%s"}
                 """.formatted(departmentId);
 
-        mockMvc.perform(put("/api/v1/users/{id}", userId).contentType("application/json").content(body))
+        mockMvc.perform(put("/api/v1/users/{id}", userId)
+                        .header("Authorization", "Bearer " + generateValidToken())
+                        .contentType("application/json")
+                        .content(body))
                 .andExpect(status().isConflict());
     }
 
@@ -122,7 +133,10 @@ class UserControllerIntegrationTest extends AbstractIntegrationTest {
                 {"name":"Novo","email":"novo2@helpdesk.com","password":"12345678","role":"CLIENTE","status":"ACTIVE","departmentId":"%s"}
                 """.formatted(departmentId);
 
-        mockMvc.perform(put("/api/v1/users/{id}", userId).contentType("application/json").content(body))
+        mockMvc.perform(put("/api/v1/users/{id}", userId)
+                        .header("Authorization", "Bearer " + generateValidToken())
+                        .contentType("application/json")
+                        .content(body))
                 .andExpect(status().isNotFound());
     }
 }

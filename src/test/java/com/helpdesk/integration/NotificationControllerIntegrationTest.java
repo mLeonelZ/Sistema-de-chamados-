@@ -34,7 +34,8 @@ class NotificationControllerIntegrationTest extends AbstractIntegrationTest {
         notification.setCreatedAt(LocalDateTime.now());
         when(notificationRepository.findAll()).thenReturn(List.of(notification));
 
-        mockMvc.perform(get("/api/v1/notifications"))
+        mockMvc.perform(get("/api/v1/notifications")
+                        .header("Authorization", "Bearer " + generateValidToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].title").value("Alerta"));
     }
@@ -54,7 +55,8 @@ class NotificationControllerIntegrationTest extends AbstractIntegrationTest {
         notification.setCreatedAt(LocalDateTime.now());
         when(notificationRepository.findById(id)).thenReturn(Optional.of(notification));
 
-        mockMvc.perform(get("/api/v1/notifications/{id}", id))
+        mockMvc.perform(get("/api/v1/notifications/{id}", id)
+                        .header("Authorization", "Bearer " + generateValidToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.type").value(NotificationType.INFO.name()));
     }
@@ -89,7 +91,10 @@ class NotificationControllerIntegrationTest extends AbstractIntegrationTest {
                 }
                 """.formatted(userId, ticketId);
 
-        mockMvc.perform(put("/api/v1/notifications/{id}", id).contentType("application/json").content(body))
+        mockMvc.perform(put("/api/v1/notifications/{id}", id)
+                        .header("Authorization", "Bearer " + generateValidToken())
+                        .contentType("application/json")
+                        .content(body))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(id.toString()))
                 .andExpect(jsonPath("$.type").value(NotificationType.SUCCESS.name()))
@@ -114,7 +119,10 @@ class NotificationControllerIntegrationTest extends AbstractIntegrationTest {
                 }
                 """.formatted(userId);
 
-        mockMvc.perform(put("/api/v1/notifications/{id}", id).contentType("application/json").content(body))
+        mockMvc.perform(put("/api/v1/notifications/{id}", id)
+                        .header("Authorization", "Bearer " + generateValidToken())
+                        .contentType("application/json")
+                        .content(body))
                 .andExpect(status().isNotFound());
     }
 
@@ -140,7 +148,10 @@ class NotificationControllerIntegrationTest extends AbstractIntegrationTest {
                 }
                 """.formatted(userId);
 
-        mockMvc.perform(put("/api/v1/notifications/{id}", id).contentType("application/json").content(body))
+        mockMvc.perform(put("/api/v1/notifications/{id}", id)
+                        .header("Authorization", "Bearer " + generateValidToken())
+                        .contentType("application/json")
+                        .content(body))
                 .andExpect(status().isNotFound());
     }
 }

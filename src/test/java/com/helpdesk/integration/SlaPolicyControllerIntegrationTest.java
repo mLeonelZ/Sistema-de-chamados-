@@ -28,7 +28,8 @@ class SlaPolicyControllerIntegrationTest extends AbstractIntegrationTest {
         policy.setUpdatedAt(LocalDateTime.now());
         when(slaPolicyRepository.findAll()).thenReturn(List.of(policy));
 
-        mockMvc.perform(get("/api/v1/sla-policies"))
+        mockMvc.perform(get("/api/v1/sla-policies")
+                        .header("Authorization", "Bearer " + generateValidToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value("Critico"));
     }
@@ -45,7 +46,8 @@ class SlaPolicyControllerIntegrationTest extends AbstractIntegrationTest {
         policy.setUpdatedAt(LocalDateTime.now());
         when(slaPolicyRepository.findById(id)).thenReturn(Optional.of(policy));
 
-        mockMvc.perform(get("/api/v1/sla-policies/{id}", id))
+        mockMvc.perform(get("/api/v1/sla-policies/{id}", id)
+                        .header("Authorization", "Bearer " + generateValidToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Alto"));
     }
@@ -69,7 +71,10 @@ class SlaPolicyControllerIntegrationTest extends AbstractIntegrationTest {
                 }
                 """;
 
-        mockMvc.perform(put("/api/v1/sla-policies/{id}", id).contentType("application/json").content(body))
+        mockMvc.perform(put("/api/v1/sla-policies/{id}", id)
+                        .header("Authorization", "Bearer " + generateValidToken())
+                        .contentType("application/json")
+                        .content(body))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(id.toString()))
                 .andExpect(jsonPath("$.name").value("Muito Alto"));
@@ -89,7 +94,10 @@ class SlaPolicyControllerIntegrationTest extends AbstractIntegrationTest {
                 }
                 """;
 
-        mockMvc.perform(put("/api/v1/sla-policies/{id}", id).contentType("application/json").content(body))
+        mockMvc.perform(put("/api/v1/sla-policies/{id}", id)
+                        .header("Authorization", "Bearer " + generateValidToken())
+                        .contentType("application/json")
+                        .content(body))
                 .andExpect(status().isNotFound());
     }
 }

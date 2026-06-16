@@ -25,6 +25,7 @@ public class SecurityConfig {
 				.authorizeHttpRequests(auth -> auth
 						.requestMatchers("/api/v1/auth/**").permitAll()
 						.requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+						.requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/users").hasRole("ADMIN")
 						.requestMatchers("/api/v1/**").authenticated()
 						.anyRequest().permitAll()
 				)

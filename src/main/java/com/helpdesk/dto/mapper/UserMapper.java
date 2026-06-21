@@ -34,6 +34,7 @@ public class UserMapper {
                 .role(user.getRole())
                 .status(user.getStatus())
                 .departmentId(user.getDepartment() != null ? user.getDepartment().getId() : null)
+                .department(user.getDepartment() != null ? user.getDepartment().getName() : null)
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .build();

@@ -16,6 +16,7 @@ public record UserResponseDto(
         Role role,
         UserStatus status,
         UUID departmentId,
+        String department,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {

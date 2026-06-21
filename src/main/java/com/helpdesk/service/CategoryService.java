@@ -19,11 +19,11 @@ public class CategoryService {
     }
 
     public List<Category> findAll() {
-        return categoryRepository.findAll();
+        return categoryRepository.findAllWithSlaPolicy();
     }
 
     public Category findById(UUID id) {
-        return categoryRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+        return categoryRepository.findByIdWithSlaPolicy(id).orElseThrow(() -> new ResourceNotFoundException("Category not found"));
     }
 
     public Category save(Category category) {

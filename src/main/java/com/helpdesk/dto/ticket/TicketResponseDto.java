@@ -16,17 +16,23 @@ public record TicketResponseDto(
         String subject,
         String description,
         UUID categoryId,
+        String category,
         TicketPriority priority,
         TicketStatus status,
         TicketChannel channel,
         UUID clientId,
+        String clientName,
         UUID assigneeId,
+        String assigneeName,
         LocalDateTime slaFirstResponseDeadline,
         LocalDateTime slaResolutionDeadline,
         LocalDateTime firstResponseAt,
         LocalDateTime resolvedAt,
         LocalDateTime closedAt,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt
+        LocalDateTime updatedAt,
+        LocalDateTime slaDeadline,
+        String slaFirstResponse,
+        String slaResolution
 ) {
 }

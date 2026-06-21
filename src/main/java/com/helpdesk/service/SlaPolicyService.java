@@ -22,6 +22,11 @@ public class SlaPolicyService {
         return slaPolicyRepository.findAll();
     }
 
+    public SlaPolicy findByName(String name) {
+        return slaPolicyRepository.findByNameIgnoreCase(name)
+                .orElseThrow(() -> new ResourceNotFoundException("Sla policy not found with name: " + name));
+    }
+
     public SlaPolicy findById(UUID id) {
         return slaPolicyRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Sla policy not found"));
     }

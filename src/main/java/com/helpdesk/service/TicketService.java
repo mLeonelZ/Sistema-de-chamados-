@@ -1,6 +1,7 @@
 package com.helpdesk.service;
 
 import com.helpdesk.exception.ResourceNotFoundException;
+import com.helpdesk.model.Category;
 import com.helpdesk.model.SlaPolicy;
 import com.helpdesk.model.Ticket;
 import com.helpdesk.model.User;
@@ -19,18 +20,41 @@ public class TicketService {
 
     private final TicketRepository ticketRepository;
     private final NotificationService notificationService;
+    private final CategoryService categoryService;
+    private final UserService userService;
+    private final SlaPolicyService slaPolicyService;
 
-    public TicketService(TicketRepository ticketRepository, NotificationService notificationService) {
+    public TicketService(
+            TicketRepository ticketRepository,
+            NotificationService notificationService,
+            CategoryService categoryService,
+            UserService userService,
+            SlaPolicyService slaPolicyService
+    ) {
         this.ticketRepository = ticketRepository;
         this.notificationService = notificationService;
+        this.categoryService = categoryService;
+        this.userService = userService;
+        this.slaPolicyService = slaPolicyService;
     }
 
+    @Transactional(readOnly = true)
     public List<Ticket> findAll() {
-        return ticketRepository.findAll();
+        return ticketRepository.findAllWithDetails();
     }
 
+    @Transactional(readOnly = true)
+    public List<Ticket> findAllByUser(User user) {
+        if (user.getRole() == com.helpdesk.model.enums.Role.CLIENTE) {
+            return ticketRepository.findByClientId(user.getId());
+        } else {
+            return ticketRepository.findAllWithDetails();
+        }
+    }
+
+    @Transactional(readOnly = true)
     public Ticket findById(UUID id) {
-        return ticketRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
+        return ticketRepository.findByIdWithDetails(id).orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
     }
 
     public Ticket findByCode(String code) {
@@ -39,6 +63,20 @@ public class TicketService {
 
     @Transactional
     public Ticket save(Ticket ticket) {
+        // Re-vincula entidades ao contexto de persistência atual para inicializar os Proxies Lazy
+        if (ticket.getCategory() != null) {
+            Category category = categoryService.findById(ticket.getCategory().getId());
+            ticket.setCategory(category);
+        }
+        if (ticket.getClient() != null) {
+            User client = userService.findById(ticket.getClient().getId());
+            ticket.setClient(client);
+        }
+        if (ticket.getAssignee() != null) {
+            User assignee = userService.findById(ticket.getAssignee().getId());
+            ticket.setAssignee(assignee);
+        }
+
         ticket.setId(UUID.randomUUID());
         ticket.setCreatedAt(LocalDateTime.now());
         ticket.setUpdatedAt(LocalDateTime.now());
@@ -47,11 +85,7 @@ public class TicketService {
         long nextNumber = ticketRepository.count() + 1;
         ticket.setCode(String.format("CHM-%04d", nextNumber));
 
-        if (ticket.getCategory() != null && ticket.getCategory().getSlaPolicy() != null) {
-            SlaPolicy sla = ticket.getCategory().getSlaPolicy();
-            ticket.setSlaFirstResponseDeadline(ticket.getCreatedAt().plusMinutes(sla.getResponseTimeMinutes()));
-            ticket.setSlaResolutionDeadline(ticket.getCreatedAt().plusMinutes(sla.getResolutionTimeMinutes()));
-        }
+        calculateSlaDeadlines(ticket);
 
         Ticket saved = ticketRepository.save(ticket);
         
@@ -64,7 +98,7 @@ public class TicketService {
                 NotificationType.NOVO_CHAMADO
         );
         
-        return saved;
+        return findById(saved.getId());
     }
 
     @Transactional
@@ -73,19 +107,29 @@ public class TicketService {
         
         User oldAssignee = existing.getAssignee();
         
+        // Re-vincula entidades ao contexto de persistência atual
+        Category category = null;
+        if (ticket.getCategory() != null) {
+            category = categoryService.findById(ticket.getCategory().getId());
+        }
+        User assignee = null;
+        if (ticket.getAssignee() != null) {
+            assignee = userService.findById(ticket.getAssignee().getId());
+        }
+        
+        boolean priorityChanged = existing.getPriority() != ticket.getPriority();
+        boolean categoryChanged = category != null && !category.equals(existing.getCategory());
+
         existing.setSubject(ticket.getSubject());
         existing.setDescription(ticket.getDescription());
-        existing.setCategory(ticket.getCategory());
+        existing.setCategory(category);
         existing.setPriority(ticket.getPriority());
         existing.setChannel(ticket.getChannel());
-        existing.setAssignee(ticket.getAssignee());
+        existing.setAssignee(assignee);
         existing.setUpdatedAt(LocalDateTime.now());
         
-        // Se a categoria mudou, recalcula SLA
-        if (ticket.getCategory() != null && !ticket.getCategory().equals(existing.getCategory())) {
-            SlaPolicy sla = ticket.getCategory().getSlaPolicy();
-            existing.setSlaFirstResponseDeadline(existing.getCreatedAt().plusMinutes(sla.getResponseTimeMinutes()));
-            existing.setSlaResolutionDeadline(existing.getCreatedAt().plusMinutes(sla.getResolutionTimeMinutes()));
+        if (priorityChanged || categoryChanged) {
+            calculateSlaDeadlines(existing);
         }
 
         Ticket updated = ticketRepository.save(existing);
@@ -101,7 +145,7 @@ public class TicketService {
             );
         }
 
-        return updated;
+        return findById(updated.getId());
     }
 
     @Transactional
@@ -130,10 +174,51 @@ public class TicketService {
             );
         }
         
-        return saved;
+        return findById(saved.getId());
     }
 
     public void deleteById(UUID id) {
         ticketRepository.deleteById(id);
+    }
+
+    private void calculateSlaDeadlines(Ticket ticket) {
+        if (ticket.getPriority() != null) {
+            String policyName;
+            switch (ticket.getPriority()) {
+                case CRITICA:
+                    policyName = "Crítico";
+                    break;
+                case ALTA:
+                    policyName = "Alto";
+                    break;
+                case MEDIA:
+                    policyName = "Médio";
+                    break;
+                case BAIXA:
+                    policyName = "Baixo";
+                    break;
+                default:
+                    return;
+            }
+            try {
+                SlaPolicy sla = slaPolicyService.findByName(policyName);
+                LocalDateTime baseTime = ticket.getCreatedAt() != null ? ticket.getCreatedAt() : LocalDateTime.now();
+                ticket.setSlaFirstResponseDeadline(baseTime.plusMinutes(sla.getResponseTimeMinutes()));
+                ticket.setSlaResolutionDeadline(baseTime.plusMinutes(sla.getResolutionTimeMinutes()));
+            } catch (Exception e) {
+                // fallback to category SLA if priority lookup fails
+                if (ticket.getCategory() != null && ticket.getCategory().getSlaPolicy() != null) {
+                    SlaPolicy sla = ticket.getCategory().getSlaPolicy();
+                    LocalDateTime baseTime = ticket.getCreatedAt() != null ? ticket.getCreatedAt() : LocalDateTime.now();
+                    ticket.setSlaFirstResponseDeadline(baseTime.plusMinutes(sla.getResponseTimeMinutes()));
+                    ticket.setSlaResolutionDeadline(baseTime.plusMinutes(sla.getResolutionTimeMinutes()));
+                }
+            }
+        } else if (ticket.getCategory() != null && ticket.getCategory().getSlaPolicy() != null) {
+            SlaPolicy sla = ticket.getCategory().getSlaPolicy();
+            LocalDateTime baseTime = ticket.getCreatedAt() != null ? ticket.getCreatedAt() : LocalDateTime.now();
+            ticket.setSlaFirstResponseDeadline(baseTime.plusMinutes(sla.getResponseTimeMinutes()));
+            ticket.setSlaResolutionDeadline(baseTime.plusMinutes(sla.getResolutionTimeMinutes()));
+        }
     }
 }

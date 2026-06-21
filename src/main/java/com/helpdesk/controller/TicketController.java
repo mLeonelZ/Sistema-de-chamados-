@@ -41,6 +41,16 @@ public class TicketController {
 
     @GetMapping
     public ResponseEntity<List<TicketResponseDto>> findAll() {
+        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof String principalStr) {
+            try {
+                UUID userId = UUID.fromString(principalStr);
+                var user = userService.findById(userId);
+                return ResponseEntity.ok(ticketService.findAllByUser(user).stream().map(TicketMapper::toResponse).toList());
+            } catch (Exception e) {
+                // fall back to default
+            }
+        }
         return ResponseEntity.ok(ticketService.findAll().stream().map(TicketMapper::toResponse).toList());
     }
 

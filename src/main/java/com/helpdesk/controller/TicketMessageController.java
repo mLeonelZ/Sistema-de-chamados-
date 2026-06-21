@@ -6,6 +6,8 @@ import com.helpdesk.dto.ticketmessage.TicketMessageResponseDto;
 import com.helpdesk.model.TicketMessage;
 import com.helpdesk.model.User;
 import com.helpdesk.model.enums.Role;
+import com.helpdesk.model.enums.MessageType;
+import com.helpdesk.exception.UnauthorizedException;
 import com.helpdesk.service.TicketMessageService;
 import com.helpdesk.service.TicketService;
 import com.helpdesk.service.UserService;
@@ -61,8 +63,16 @@ public class TicketMessageController {
     @PostMapping
     public ResponseEntity<TicketMessageResponseDto> create(
             @PathVariable UUID ticketId,
-            @RequestBody @Valid TicketMessageRequestDto dto
+            @RequestBody @Valid TicketMessageRequestDto dto,
+            Authentication authentication
     ) {
+        UUID userId = UUID.fromString(authentication.getName());
+        User user = userService.findById(userId);
+
+        if (dto.type() == MessageType.INTERNAL && user.getRole() == Role.CLIENTE) {
+            throw new UnauthorizedException("Apenas administradores e atendentes podem enviar mensagens internas/privadas.");
+        }
+
         TicketMessage ticketMessage = TicketMessageMapper.toEntity(
                 dto,
                 ticketService.findById(ticketId),

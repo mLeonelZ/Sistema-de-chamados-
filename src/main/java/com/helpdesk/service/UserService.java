@@ -7,6 +7,7 @@ import com.helpdesk.model.User;
 import com.helpdesk.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -22,12 +23,14 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
+    @Transactional(readOnly = true)
     public List<User> findAll() {
-        return userRepository.findAll();
+        return userRepository.findAllWithDepartment();
     }
 
+    @Transactional(readOnly = true)
     public User findById(UUID id) {
-        return userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        return userRepository.findByIdWithDepartment(id).orElseThrow(() -> new ResourceNotFoundException("User not found"));
     }
 
     public User findByEmail(String email) {
@@ -49,7 +52,11 @@ public class UserService {
         if (userRepository.existsByEmail(user.getEmail())) {
             throw new BusinessRuleException("Já existe um usuário cadastrado com o e-mail informado.");
         }
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        if (user.getPassword() == null || user.getPassword().isBlank()) {
+            user.setPassword(passwordEncoder.encode("12345678"));
+        } else {
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+        }
         return userRepository.save(user);
     }
 

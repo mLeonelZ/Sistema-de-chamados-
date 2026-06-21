@@ -1,16 +1,20 @@
 package com.helpdesk.controller;
 
-import com.helpdesk.dto.FieldMapper;
+import com.helpdesk.dto.mapper.TicketMessageMapper;
 import com.helpdesk.dto.ticketmessage.TicketMessageRequestDto;
 import com.helpdesk.dto.ticketmessage.TicketMessageResponseDto;
-import com.helpdesk.model.Ticket;
 import com.helpdesk.model.TicketMessage;
 import com.helpdesk.model.User;
+import com.helpdesk.model.enums.Role;
+import com.helpdesk.model.enums.MessageType;
+import com.helpdesk.exception.UnauthorizedException;
 import com.helpdesk.service.TicketMessageService;
 import com.helpdesk.service.TicketService;
 import com.helpdesk.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,12 +23,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/ticket-messages")
+@RequestMapping("/api/v1/tickets/{ticketId}/messages")
 public class TicketMessageController {
 
     private final TicketMessageService ticketMessageService;
@@ -38,43 +41,49 @@ public class TicketMessageController {
     }
 
     @GetMapping
-    public ResponseEntity<List<TicketMessageResponseDto>> findAll() {
-        return ResponseEntity.ok(ticketMessageService.findAll().stream().map(this::toResponseDto).toList());
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<TicketMessageResponseDto> findById(@PathVariable UUID id) {
-        return ResponseEntity.ok(toResponseDto(ticketMessageService.findById(id)));
+    public ResponseEntity<List<TicketMessageResponseDto>> findByTicketId(
+            @PathVariable UUID ticketId,
+            Authentication authentication
+    ) {
+        // Busca o usuário logado para verificar a Role
+        UUID userId = UUID.fromString(authentication.getName());
+        User user = userService.findById(userId);
+        
+        // CLIENTE não vê mensagens INTERNAL
+        boolean includeInternal = user.getRole() != Role.CLIENTE;
+        
+        List<TicketMessageResponseDto> messages = ticketMessageService.findByTicketId(ticketId, includeInternal)
+                .stream()
+                .map(TicketMessageMapper::toResponse)
+                .toList();
+                
+        return ResponseEntity.ok(messages);
     }
 
     @PostMapping
-    public ResponseEntity<TicketMessageResponseDto> create(@RequestBody TicketMessageRequestDto dto) {
-        TicketMessage ticketMessage = new TicketMessage();
-        FieldMapper.write(ticketMessage, "id", dto.id());
-        FieldMapper.write(ticketMessage, "ticket", ticketService.findById(dto.ticketId()));
-        FieldMapper.write(ticketMessage, "author", userService.findById(dto.authorId()));
-        FieldMapper.write(ticketMessage, "type", dto.type());
-        FieldMapper.write(ticketMessage, "text", dto.text());
-        FieldMapper.write(ticketMessage, "createdAt", LocalDateTime.now());
-        return ResponseEntity.status(HttpStatus.CREATED).body(toResponseDto(ticketMessageService.save(ticketMessage)));
+    public ResponseEntity<TicketMessageResponseDto> create(
+            @PathVariable UUID ticketId,
+            @RequestBody @Valid TicketMessageRequestDto dto,
+            Authentication authentication
+    ) {
+        UUID userId = UUID.fromString(authentication.getName());
+        User user = userService.findById(userId);
+
+        if (dto.type() == MessageType.INTERNAL && user.getRole() == Role.CLIENTE) {
+            throw new UnauthorizedException("Apenas administradores e atendentes podem enviar mensagens internas/privadas.");
+        }
+
+        TicketMessage ticketMessage = TicketMessageMapper.toEntity(
+                dto,
+                ticketService.findById(ticketId),
+                userService.findById(dto.authorId())
+        );
+        return ResponseEntity.status(HttpStatus.CREATED).body(TicketMessageMapper.toResponse(ticketMessageService.save(ticketMessage)));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+    public ResponseEntity<Void> delete(@PathVariable UUID ticketId, @PathVariable UUID id) {
         ticketMessageService.deleteById(id);
         return ResponseEntity.noContent().build();
-    }
-
-    private TicketMessageResponseDto toResponseDto(TicketMessage ticketMessage) {
-        Ticket ticket = FieldMapper.read(ticketMessage, "ticket", Ticket.class);
-        User author = FieldMapper.read(ticketMessage, "author", User.class);
-        return new TicketMessageResponseDto(
-                FieldMapper.read(ticketMessage, "id", UUID.class),
-                ticket == null ? null : FieldMapper.read(ticket, "id", UUID.class),
-                author == null ? null : FieldMapper.read(author, "id", UUID.class),
-                FieldMapper.read(ticketMessage, "type", com.helpdesk.model.enums.MessageType.class),
-                FieldMapper.read(ticketMessage, "text", String.class),
-                FieldMapper.read(ticketMessage, "createdAt", LocalDateTime.class)
-        );
     }
 }

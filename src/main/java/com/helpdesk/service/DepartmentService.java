@@ -1,5 +1,6 @@
 package com.helpdesk.service;
 
+import com.helpdesk.exception.ResourceNotFoundException;
 import com.helpdesk.model.Department;
 import com.helpdesk.repository.DepartmentRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -22,10 +23,17 @@ public class DepartmentService {
     }
 
     public Department findById(UUID id) {
-        return departmentRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Department not found"));
+        return departmentRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Department not found"));
     }
 
     public Department save(Department department) {
+        return departmentRepository.save(department);
+    }
+
+    public Department update(UUID id, Department department) {
+        Department existing = findById(id);
+        department.setId(existing.getId());
+        department.setCreatedAt(existing.getCreatedAt());
         return departmentRepository.save(department);
     }
 

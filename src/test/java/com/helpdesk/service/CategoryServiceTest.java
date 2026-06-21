@@ -30,7 +30,7 @@ class CategoryServiceTest {
     @Test
     void findByIdShouldThrowWhenNotFound() {
         UUID id = UUID.randomUUID();
-        when(categoryRepository.findById(id)).thenReturn(Optional.empty());
+        when(categoryRepository.findByIdWithSlaPolicy(id)).thenReturn(Optional.empty());
         assertThrows(ResourceNotFoundException.class, () -> categoryService.findById(id));
     }
 
@@ -49,7 +49,7 @@ class CategoryServiceTest {
         existing.setCreatedAt(LocalDateTime.now().minusDays(1));
         Category incoming = new Category();
         incoming.setUpdatedAt(LocalDateTime.now());
-        when(categoryRepository.findById(id)).thenReturn(Optional.of(existing));
+        when(categoryRepository.findByIdWithSlaPolicy(id)).thenReturn(Optional.of(existing));
         when(categoryRepository.save(incoming)).thenReturn(incoming);
         Category saved = categoryService.update(id, incoming);
         assertEquals(id, saved.getId());

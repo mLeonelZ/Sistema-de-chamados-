@@ -4,6 +4,7 @@ import com.helpdesk.exception.ResourceNotFoundException;
 import com.helpdesk.model.Category;
 import com.helpdesk.model.SlaPolicy;
 import com.helpdesk.model.Ticket;
+import com.helpdesk.model.User;
 import com.helpdesk.model.enums.TicketStatus;
 import com.helpdesk.repository.TicketRepository;
 import org.junit.jupiter.api.Test;
@@ -31,6 +32,15 @@ class TicketServiceTest {
     @Mock
     private NotificationService notificationService;
 
+    @Mock
+    private CategoryService categoryService;
+
+    @Mock
+    private UserService userService;
+
+    @Mock
+    private SlaPolicyService slaPolicyService;
+
     @InjectMocks
     private TicketService ticketService;
 
@@ -41,13 +51,24 @@ class TicketServiceTest {
         sla.setResolutionTimeMinutes(240);
         
         Category category = new Category();
+        category.setId(UUID.randomUUID());
         category.setSlaPolicy(sla);
         
         Ticket ticket = new Ticket();
         ticket.setCategory(category);
+        ticket.setPriority(com.helpdesk.model.enums.TicketPriority.MEDIA);
         
+        User client = new User();
+        client.setId(UUID.randomUUID());
+        ticket.setClient(client);
+        
+        when(categoryService.findById(category.getId())).thenReturn(category);
+        when(userService.findById(client.getId())).thenReturn(client);
+        when(slaPolicyService.findByName("Médio")).thenReturn(sla);
+
         when(ticketRepository.count()).thenReturn(5L);
         when(ticketRepository.save(any(Ticket.class))).thenAnswer(i -> i.getArgument(0));
+        when(ticketRepository.findByIdWithDetails(any(UUID.class))).thenReturn(Optional.of(ticket));
         
         Ticket saved = ticketService.save(ticket);
         
@@ -71,11 +92,13 @@ class TicketServiceTest {
         existing.setId(id);
         existing.setCreatedAt(LocalDateTime.now().minusDays(1));
         existing.setCode("CHM-0001");
+        existing.setPriority(com.helpdesk.model.enums.TicketPriority.MEDIA);
         
         Ticket incoming = new Ticket();
         incoming.setSubject("New Subject");
+        incoming.setPriority(com.helpdesk.model.enums.TicketPriority.MEDIA);
         
-        when(ticketRepository.findById(id)).thenReturn(Optional.of(existing));
+        when(ticketRepository.findByIdWithDetails(id)).thenReturn(Optional.of(existing));
         when(ticketRepository.save(any(Ticket.class))).thenAnswer(i -> i.getArgument(0));
         
         Ticket saved = ticketService.update(id, incoming);

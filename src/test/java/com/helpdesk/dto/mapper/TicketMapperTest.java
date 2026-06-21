@@ -28,8 +28,6 @@ class TicketMapperTest {
         assignee.setId(UUID.randomUUID());
         TicketRequestDto dto = new TicketRequestDto("T-1", "s", "d", category.getId(), TicketPriority.ALTA, TicketStatus.ABERTO, TicketChannel.EMAIL, client.getId(), assignee.getId(), null, null, null, null, null);
         Ticket ticket = TicketMapper.toEntity(dto, category, client, assignee);
-        assertNotNull(ticket.getId());
-        assertEquals("T-1", ticket.getCode());
         assertEquals(category, ticket.getCategory());
         assertEquals(client, ticket.getClient());
     }

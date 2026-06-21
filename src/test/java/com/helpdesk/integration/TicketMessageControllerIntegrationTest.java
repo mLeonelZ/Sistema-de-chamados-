@@ -49,7 +49,7 @@ class TicketMessageControllerIntegrationTest extends AbstractIntegrationTest {
         // generateValidToken usa ADMIN por padrão no AbstractIntegrationTest, 
         // mas o controlador busca o usuário pelo ID vindo do token (authentication.getName())
         // Precisamos mockar o findById do UserService para retornar o perfil correto
-        when(userRepository.findById(any(UUID.class))).thenReturn(Optional.of(client));
+        when(userRepository.findByIdWithDepartment(any(UUID.class))).thenReturn(Optional.of(client));
         when(ticketMessageRepository.findByTicketIdOrderByCreatedAtAsc(ticketId)).thenReturn(List.of(m1, m2));
 
         mockMvc.perform(get("/api/v1/tickets/{ticketId}/messages", ticketId)
@@ -68,9 +68,10 @@ class TicketMessageControllerIntegrationTest extends AbstractIntegrationTest {
         ticket.setId(ticketId);
         User author = new User();
         author.setId(authorId);
+        author.setRole(Role.ADMIN); // Defina a role para evitar null pointers ou falso-positivos
         
-        when(ticketRepository.findById(ticketId)).thenReturn(Optional.of(ticket));
-        when(userRepository.findById(authorId)).thenReturn(Optional.of(author));
+        when(ticketRepository.findByIdWithDetails(ticketId)).thenReturn(Optional.of(ticket));
+        when(userRepository.findByIdWithDepartment(any(UUID.class))).thenReturn(Optional.of(author));
         when(ticketMessageRepository.save(any(TicketMessage.class))).thenAnswer(i -> i.getArgument(0));
 
         String body = """
@@ -88,5 +89,35 @@ class TicketMessageControllerIntegrationTest extends AbstractIntegrationTest {
                         .content(body))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.text").value("Nova mensagem"));
+    }
+
+    @Test
+    void createInternalMessageAsClientShouldReturn401() throws Exception {
+        UUID ticketId = UUID.randomUUID();
+        UUID authorId = UUID.randomUUID();
+        
+        Ticket ticket = new Ticket();
+        ticket.setId(ticketId);
+        User client = new User();
+        client.setId(authorId);
+        client.setRole(Role.CLIENTE);
+        
+        when(ticketRepository.findByIdWithDetails(ticketId)).thenReturn(Optional.of(ticket));
+        when(userRepository.findByIdWithDepartment(any(UUID.class))).thenReturn(Optional.of(client));
+
+        String body = """
+                {
+                  "ticketId":"%s",
+                  "authorId":"%s",
+                  "type":"INTERNAL",
+                  "text":"Mensagem privada tentada por cliente"
+                }
+                """.formatted(ticketId, authorId);
+
+        mockMvc.perform(post("/api/v1/tickets/{ticketId}/messages", ticketId)
+                        .header("Authorization", "Bearer " + generateValidToken())
+                        .contentType("application/json")
+                        .content(body))
+                .andExpect(status().isUnauthorized());
     }
 }

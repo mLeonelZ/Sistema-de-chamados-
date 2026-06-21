@@ -1,6 +1,7 @@
 package com.helpdesk.integration;
 
 import com.helpdesk.model.Category;
+import com.helpdesk.model.SlaPolicy;
 import com.helpdesk.model.Ticket;
 import com.helpdesk.model.User;
 import com.helpdesk.model.enums.TicketChannel;
@@ -34,7 +35,7 @@ class TicketControllerIntegrationTest extends AbstractIntegrationTest {
         ticket.setSubject("Falha no sistema");
         ticket.setCategory(category);
         ticket.setClient(client);
-        when(ticketRepository.findAll()).thenReturn(List.of(ticket));
+        when(ticketRepository.findAllWithDetails()).thenReturn(List.of(ticket));
 
         mockMvc.perform(get("/api/v1/tickets")
                         .header("Authorization", "Bearer " + generateValidToken()))
@@ -55,7 +56,7 @@ class TicketControllerIntegrationTest extends AbstractIntegrationTest {
         ticket.setSubject("Erro no login");
         ticket.setCategory(category);
         ticket.setClient(client);
-        when(ticketRepository.findById(id)).thenReturn(Optional.of(ticket));
+        when(ticketRepository.findByIdWithDetails(id)).thenReturn(Optional.of(ticket));
 
         mockMvc.perform(get("/api/v1/tickets/{id}", id)
                         .header("Authorization", "Bearer " + generateValidToken()))
@@ -84,10 +85,10 @@ class TicketControllerIntegrationTest extends AbstractIntegrationTest {
         User assignee = new User();
         assignee.setId(assigneeId);
 
-        when(ticketRepository.findById(ticketId)).thenReturn(Optional.of(existing));
-        when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
-        when(userRepository.findById(clientId)).thenReturn(Optional.of(client));
-        when(userRepository.findById(assigneeId)).thenReturn(Optional.of(assignee));
+        when(ticketRepository.findByIdWithDetails(ticketId)).thenReturn(Optional.of(existing));
+        when(categoryRepository.findByIdWithSlaPolicy(categoryId)).thenReturn(Optional.of(category));
+        when(userRepository.findByIdWithDepartment(clientId)).thenReturn(Optional.of(client));
+        when(userRepository.findByIdWithDepartment(assigneeId)).thenReturn(Optional.of(assignee));
         when(ticketRepository.save(any(Ticket.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         String body = """
@@ -119,7 +120,7 @@ class TicketControllerIntegrationTest extends AbstractIntegrationTest {
         UUID categoryId = UUID.randomUUID();
         UUID clientId = UUID.randomUUID();
 
-        when(categoryRepository.findById(categoryId)).thenReturn(Optional.empty());
+        when(categoryRepository.findByIdWithSlaPolicy(categoryId)).thenReturn(Optional.empty());
 
         String body = """
                 {
@@ -158,10 +159,25 @@ class TicketControllerIntegrationTest extends AbstractIntegrationTest {
         User client = new User();
         client.setId(clientId);
         
-        when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
-        when(userRepository.findById(clientId)).thenReturn(Optional.of(client));
+        SlaPolicy sla = new SlaPolicy();
+        sla.setResponseTimeMinutes(15);
+        sla.setResolutionTimeMinutes(240);
+
+        when(categoryRepository.findByIdWithSlaPolicy(categoryId)).thenReturn(Optional.of(category));
+        when(userRepository.findByIdWithDepartment(clientId)).thenReturn(Optional.of(client));
+        when(slaPolicyRepository.findByNameIgnoreCase("Crítico")).thenReturn(Optional.of(sla));
         when(ticketRepository.count()).thenReturn(0L);
         when(ticketRepository.save(any(Ticket.class))).thenAnswer(i -> i.getArgument(0));
+        when(ticketRepository.findByIdWithDetails(any(UUID.class))).thenAnswer(i -> {
+            Ticket t = new Ticket();
+            t.setId((UUID) i.getArguments()[0]);
+            t.setCode("CHM-0001");
+            t.setStatus(TicketStatus.ABERTO);
+            t.setCategory(category);
+            t.setClient(client);
+            t.setCreatedAt(LocalDateTime.now());
+            return Optional.of(t);
+        });
 
         String body = """
                 {
@@ -190,7 +206,7 @@ class TicketControllerIntegrationTest extends AbstractIntegrationTest {
         ticket.setId(id);
         ticket.setStatus(TicketStatus.ABERTO);
         
-        when(ticketRepository.findById(id)).thenReturn(Optional.of(ticket));
+        when(ticketRepository.findByIdWithDetails(id)).thenReturn(Optional.of(ticket));
         when(ticketRepository.save(any(Ticket.class))).thenAnswer(i -> i.getArgument(0));
 
         mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch("/api/v1/tickets/{id}/status", id)

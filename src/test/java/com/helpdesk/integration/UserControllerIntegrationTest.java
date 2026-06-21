@@ -24,7 +24,7 @@ class UserControllerIntegrationTest extends AbstractIntegrationTest {
         user.setId(UUID.randomUUID());
         user.setName("Maria");
         user.setEmail("maria@helpdesk.com");
-        when(userRepository.findAll()).thenReturn(List.of(user));
+        when(userRepository.findAllWithDepartment()).thenReturn(List.of(user));
 
         mockMvc.perform(get("/api/v1/users")
                         .header("Authorization", "Bearer " + generateValidToken()))
@@ -39,7 +39,7 @@ class UserControllerIntegrationTest extends AbstractIntegrationTest {
         user.setId(userId);
         user.setName("Maria");
         user.setEmail("maria@helpdesk.com");
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.findByIdWithDepartment(userId)).thenReturn(Optional.of(user));
 
         mockMvc.perform(get("/api/v1/users/{id}", userId)
                         .header("Authorization", "Bearer " + generateValidToken()))
@@ -58,7 +58,7 @@ class UserControllerIntegrationTest extends AbstractIntegrationTest {
         existing.setCreatedAt(LocalDateTime.now().minusDays(1));
         existing.setPassword("$2a$10$abc");
         when(departmentRepository.findById(departmentId)).thenReturn(Optional.of(department));
-        when(userRepository.findById(userId)).thenReturn(Optional.of(existing));
+        when(userRepository.findByIdWithDepartment(userId)).thenReturn(Optional.of(existing));
         when(userRepository.existsByEmailAndIdNot("novo@helpdesk.com", userId)).thenReturn(false);
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -106,7 +106,7 @@ class UserControllerIntegrationTest extends AbstractIntegrationTest {
         existing.setId(userId);
         existing.setCreatedAt(LocalDateTime.now().minusDays(1));
         when(departmentRepository.findById(departmentId)).thenReturn(Optional.of(department));
-        when(userRepository.findById(userId)).thenReturn(Optional.of(existing));
+        when(userRepository.findByIdWithDepartment(userId)).thenReturn(Optional.of(existing));
         when(userRepository.existsByEmailAndIdNot("duplicado@helpdesk.com", userId)).thenReturn(true);
 
         String body = """
@@ -127,7 +127,7 @@ class UserControllerIntegrationTest extends AbstractIntegrationTest {
         Department department = new Department();
         department.setId(departmentId);
         when(departmentRepository.findById(departmentId)).thenReturn(Optional.of(department));
-        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+        when(userRepository.findByIdWithDepartment(userId)).thenReturn(Optional.empty());
 
         String body = """
                 {"name":"Novo","email":"novo2@helpdesk.com","password":"12345678","role":"CLIENTE","status":"ACTIVE","departmentId":"%s"}

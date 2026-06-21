@@ -28,7 +28,7 @@ class CategoryControllerIntegrationTest extends AbstractIntegrationTest {
         category.setSlaPolicy(sla);
         category.setCreatedAt(LocalDateTime.now().minusDays(1));
         category.setUpdatedAt(LocalDateTime.now());
-        when(categoryRepository.findAll()).thenReturn(List.of(category));
+        when(categoryRepository.findAllWithSlaPolicy()).thenReturn(List.of(category));
 
         mockMvc.perform(get("/api/v1/categories")
                 .header("Authorization", "Bearer " + generateValidToken()))
@@ -47,7 +47,7 @@ class CategoryControllerIntegrationTest extends AbstractIntegrationTest {
         category.setSlaPolicy(sla);
         category.setCreatedAt(LocalDateTime.now().minusDays(1));
         category.setUpdatedAt(LocalDateTime.now());
-        when(categoryRepository.findById(id)).thenReturn(Optional.of(category));
+        when(categoryRepository.findByIdWithSlaPolicy(id)).thenReturn(Optional.of(category));
 
         mockMvc.perform(get("/api/v1/categories/{id}", id)
                 .header("Authorization", "Bearer " + generateValidToken()))
@@ -68,7 +68,7 @@ class CategoryControllerIntegrationTest extends AbstractIntegrationTest {
         existing.setCreatedAt(LocalDateTime.now().minusDays(2));
 
         when(slaPolicyRepository.findById(slaId)).thenReturn(Optional.of(sla));
-        when(categoryRepository.findById(id)).thenReturn(Optional.of(existing));
+        when(categoryRepository.findByIdWithSlaPolicy(id)).thenReturn(Optional.of(existing));
         when(categoryRepository.save(any(Category.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         String body = """

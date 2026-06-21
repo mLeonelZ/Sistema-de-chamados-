@@ -59,7 +59,7 @@ class UserServiceTest {
     @Test
     void findByIdShouldThrowWhenNotFound() {
         UUID id = UUID.randomUUID();
-        when(userRepository.findById(id)).thenReturn(Optional.empty());
+        when(userRepository.findByIdWithDepartment(id)).thenReturn(Optional.empty());
         assertThrows(ResourceNotFoundException.class, () -> userService.findById(id));
     }
 
@@ -75,7 +75,7 @@ class UserServiceTest {
         User incoming = new User();
         incoming.setEmail("a@a.com");
         incoming.setPassword("12345678");
-        when(userRepository.findById(id)).thenReturn(Optional.of(existing));
+        when(userRepository.findByIdWithDepartment(id)).thenReturn(Optional.of(existing));
         when(passwordEncoder.matches("12345678", hash)).thenReturn(true);
         when(userRepository.existsByEmailAndIdNot("a@a.com", id)).thenReturn(false);
         when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
@@ -95,7 +95,7 @@ class UserServiceTest {
         User incoming = new User();
         incoming.setEmail("x@x.com");
         incoming.setPassword("12345678");
-        when(userRepository.findById(id)).thenReturn(Optional.of(existing));
+        when(userRepository.findByIdWithDepartment(id)).thenReturn(Optional.of(existing));
         when(userRepository.existsByEmailAndIdNot("x@x.com", id)).thenReturn(true);
         assertThrows(BusinessRuleException.class, () -> userService.update(id, incoming));
     }
